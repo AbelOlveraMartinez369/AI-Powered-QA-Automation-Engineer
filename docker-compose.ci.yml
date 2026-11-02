@@ -1,0 +1,29 @@
+services:
+  postgres:
+    extends:
+      file: docker-compose.yml
+      service: postgres
+
+  petclinic-api:
+    extends:
+      file: docker-compose.yml
+      service: petclinic-api
+
+  petclinic-ui:
+    extends:
+      file: docker-compose.yml
+      service: petclinic-ui
+
+  framework:
+    extends:
+      file: docker-compose.yml
+      service: framework
+    environment:
+      CI: "true"
+      BASE_URL: http://petclinic-ui:8080/
+      API_BASE_URL: http://petclinic-api:9966/petclinic/api
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: petclinic
+      DB_USER: petclinic_user
+      DB_PASSWORD: changeme

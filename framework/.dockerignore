@@ -1,0 +1,13 @@
+# Dependencias locales (se reinstalan dentro del contenedor con npm ci)
+node_modules
+
+# Resultados y reportes generados localmente
+allure-results
+allure-report
+test-results
+playwright-report
+
+# Archivos de entorno (se inyectan por variables en docker-compose)
+.env
+.env.dev
+.env.qa

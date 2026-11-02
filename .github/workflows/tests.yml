@@ -1,0 +1,60 @@
+# Nombre del workflow que aparecerá en la pestaña Actions de GitHub
+name: QA Framework Tests
+
+# Define los eventos que disparan este workflow
+on:
+  # Se dispara cuando hay un push a las ramas main o develop
+  push:
+    branches: [main, develop]
+  # Se dispara cuando se abre o actualiza un Pull Request hacia main o develop
+  pull_request:
+    branches: [main, develop]
+  # Permite ejecutar el workflow manualmente desde la interfaz de GitHub
+  workflow_dispatch:
+
+# Define los trabajos o jobs que se van a ejecutar
+jobs:
+  # Nombre del job (puede ser cualquiera)
+  test:
+    # Máquina virtual donde correrá el job (Ubuntu más reciente)
+    runs-on: ubuntu-latest
+    # Tiempo máximo en minutos antes de que el job se cancele por timeout
+    timeout-minutes: 20
+
+    # Lista de pasos que se ejecutan en orden dentro del job
+    steps:
+      # Paso 1: Descarga el código del repositorio en el runner
+      - name: Checkout código
+        # Acción oficial de GitHub para hacer el checkout del repositorio
+        uses: actions/checkout@v4
+
+      # Paso 2: Configura Docker Buildx (necesario para builds avanzados)
+      - name: Configurar Docker Buildx
+        # Acción oficial de Docker para configurar Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Paso 3: Levanta el entorno con Docker Compose y corre la suite de Playwright
+      - name: Correr suite completa (UI + API + DB)
+        # Ejecuta el comando de Docker usando los dos archivos de compose
+        run: docker-compose -f docker-compose.yml -f docker-compose.ci.yml up --build --exit-code-from framework
+
+      # Paso 4: Sube los resultados de Allure como artefacto descargable
+      - name: Subir resultados de Allure como artefacto
+        # El 'if: always()' asegura que se ejecute incluso si los tests fallan
+        if: always()
+        # Acción oficial de GitHub para subir artefactos
+        uses: actions/upload-artifact@v4
+        with:
+          # Nombre del artefacto que se generará
+          name: allure-results
+          # Ruta de los resultados en el repositorio
+          path: framework/allure-results
+          # Días que se conservará el artefacto antes de borrarse
+          retention-days: 15
+
+      # Paso 5: Apaga y limpia los contenedores de Docker
+      - name: Apagar entorno
+        # El 'if: always()' asegura que se ejecute incluso si los tests fallaron
+        if: always()
+        # Comando para bajar los contenedores y borrar los volúmenes
+        run: docker-compose -f docker-compose.yml -f docker-compose.ci.yml down -v
