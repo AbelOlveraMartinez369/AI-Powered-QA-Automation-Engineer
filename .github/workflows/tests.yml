@@ -12,6 +12,15 @@ on:
   # Permite ejecutar el workflow manualmente desde la interfaz de GitHub
   workflow_dispatch:
 
+# Permisos necesarios para que peaceiris pueda escribir en la rama gh-pages
+permissions:
+  # Permiso para leer y escribir el contenido del repositorio
+  contents: write
+  # Permiso para desplegar en GitHub Pages
+  pages: write
+  # Permiso para generar el token OIDC que usa GitHub Pages
+  id-token: write
+
 # Define los trabajos o jobs que se van a ejecutar
 jobs:
   # Nombre del job (puede ser cualquiera)
@@ -52,9 +61,62 @@ jobs:
           # Días que se conservará el artefacto antes de borrarse
           retention-days: 15
 
-      # Paso 5: Apaga y limpia los contenedores de Docker
+      # Paso 4.5: Hacer checkout de la rama gh-pages para recuperar el historial
+      - name: Checkout rama gh-pages para historial
+        # Se ejecuta incluso si los tests fallaron
+        if: always()
+        uses: actions/checkout@v4
+        with:
+          # Apunta a la rama gh-pages
+          ref: gh-pages
+          # La clona en una subcarpeta para no chocar con el código principal
+          path: gh-pages-branch
+          # Clona con historial completo para recuperar tendencias
+          fetch-depth: 0
+        # Si la rama gh-pages no existe aún, no falla el workflow
+        continue-on-error: true
+
+      # Paso 5: Generar reporte de Allure con historial (usando el CLI oficial)
+      - name: Generar reporte Allure con historial
+        # Se ejecuta incluso si los tests fallaron
+        if: always()
+        # Ejecuta el CLI de Allure descargado directamente de GitHub Releases
+        run: |
+          # Crea la carpeta de historial dentro de los resultados de Allure
+          mkdir -p framework/allure-results/history
+          # Si existe el historial de la ejecución anterior en la rama gh-pages, lo copia
+          if [ -d "gh-pages-branch/history" ]; then
+            cp -r gh-pages-branch/history/* framework/allure-results/history/
+          fi
+          # Descarga el CLI oficial de Allure (versión 2.30.0)
+          wget https://github.com/allure-framework/allure2/releases/download/2.30.0/allure-2.30.0.tgz
+          # Descomprime el archivo descargado
+          tar -xzf allure-2.30.0.tgz
+          # Genera el reporte limpio en la carpeta allure-report
+          ./allure-2.30.0/bin/allure generate framework/allure-results -o allure-report --clean
+          # Actualiza el historial dentro del reporte generado para la próxima ejecución
+          mkdir -p allure-report/history
+          cp -r framework/allure-results/history/* allure-report/history/ 2>/dev/null || true
+
+      # Paso 6: Publicar el reporte en GitHub Pages
+      - name: Publicar en GitHub Pages
+        # Se ejecuta incluso si los tests fallaron
+        if: always()
+        # Acción de la comunidad que publica en la rama gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          # Token automático de GitHub para autenticarse
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          # Rama donde se publica el reporte
+          publish_branch: gh-pages
+          # Carpeta que se publica (el reporte de Allure generado)
+          publish_dir: ./allure-report
+          # No conserva archivos previos, solo publica los del reporte actual
+          keep_files: false
+
+      # Paso 7: Apaga y limpia los contenedores de Docker
       - name: Apagar entorno
-        # El 'if: always()' asegura que se ejecute incluso si los tests fallaron
+        # Se ejecuta incluso si los tests fallaron
         if: always()
         # Comando para bajar los contenedores y borrar los volúmenes
         run: docker compose -f docker-compose.yml -f docker-compose.ci.yml down -v
