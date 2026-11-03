@@ -36,7 +36,7 @@ jobs:
       # Paso 3: Levanta el entorno con Docker Compose y corre la suite de Playwright
       - name: Correr suite completa (UI + API + DB)
         # Ejecuta el comando de Docker usando los dos archivos de compose
-        run: docker-compose -f docker-compose.yml -f docker-compose.ci.yml up --build --exit-code-from framework
+        run: docker compose -f docker-compose.yml -f docker-compose.ci.yml up --build --exit-code-from framework
 
       # Paso 4: Sube los resultados de Allure como artefacto descargable
       - name: Subir resultados de Allure como artefacto
@@ -57,4 +57,4 @@ jobs:
         # El 'if: always()' asegura que se ejecute incluso si los tests fallaron
         if: always()
         # Comando para bajar los contenedores y borrar los volúmenes
-        run: docker-compose -f docker-compose.yml -f docker-compose.ci.yml down -v
+        run: docker compose -f docker-compose.yml -f docker-compose.ci.yml down -v
