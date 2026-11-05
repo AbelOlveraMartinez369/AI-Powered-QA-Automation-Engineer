@@ -44,7 +44,11 @@ services:
       petclinic-api:
         condition: service_healthy
     environment:
+      # Aquí le decimos a la UI que busque la API en el nombre del servicio de Docker
       REST_API_URL: http://petclinic-api:9966/petclinic/api/
+    # Esto es el truco: le dice a tu Mac que "petclinic-api" es "localhost"
+    extra_hosts:
+      - "petclinic-api:127.0.0.1"
     ports:
       - "8080:8080"
 
