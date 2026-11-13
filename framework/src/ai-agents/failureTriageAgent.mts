@@ -10,7 +10,7 @@ const client = new OpenAI({
   // URL base de la API de DeepSeek
   baseURL: 'https://api.deepseek.com',
   // API Key de DeepSeek (la que configuraste en OpenCode)
-  apiKey: 'sk-a1d205a5f2d0450c86427d15696596e8',
+  apiKey: process.env.DEEPSEEK_API_KEY,
 });
 
 // Define el tipo de un resultado de Allure

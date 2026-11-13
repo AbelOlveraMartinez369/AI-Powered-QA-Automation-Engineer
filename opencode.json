@@ -5,7 +5,7 @@
       "npm": "@ai-sdk/openai-compatible",
       "options": {
         "baseURL": "https://api.deepseek.com",
-        "apiKey": "sk-a1d205a5f2d0450c86427d15696596e8"
+        "apiKey": "{file:~/.secrets/deepseek-key}"
       },
       "models": {
         "deepseek-chat": {}
@@ -16,6 +16,11 @@
     "playwright": {
       "type": "local",
       "command": ["npx", "-y", "@playwright/mcp@latest"],
+      "enabled": true
+    },
+    "vibium": {
+      "type": "local",
+      "command": ["npx", "-y", "vibium", "mcp"],
       "enabled": true
     }
   }

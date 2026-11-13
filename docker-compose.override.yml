@@ -1,0 +1,6 @@
+services:
+  petclinic-ui:
+    environment:
+      REST_API_URL: http://localhost:9966/petclinic/api/
+    extra_hosts:
+      - "localhost:host-gateway"
