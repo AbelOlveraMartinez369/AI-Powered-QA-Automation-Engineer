@@ -1,3 +1,4 @@
+
 // Importa test y expect desde el archivo de fixtures de páginas
 import { test, expect } from '@fixtures/pageFixtures';
 // Importa la clase OwnerBuilder desde el alias de builders de datos
@@ -47,7 +48,36 @@ test.describe('Registro de owners', { tag: '@ui' }, () => {
       ownersListPage.rowByName(`Abel ${newOwner.lastName}`),
     // Comprueba que el elemento sea visible
     ).toBeVisible();
-  // Cierra el paso 'Verificar que el owner fue guardado'
+          // 🆕 Verifica que la URL cambió a la lista de owners (confirmación de registro)
+      await expect(ownersListPage.page).toHaveURL(/\/owners$/);
+      // Cierra el paso 'Verificar que el owner fue guardado'
+    });
   });
+
+  // 🆕 Declara un test que verifica rechazar un owner con apellido inválido
+  test('debe rechazar un owner con apellido inválido', async ({
+    // Recibe la fixture addOwnerPage del contexto del test
+    addOwnerPage,
+  }) => {
+    // Abre la página de agregar owner usando el método open
+    await addOwnerPage.open();
+    // Rellena el campo First Name con un nombre válido
+    await addOwnerPage.page.getByLabel('First Name').fill('Abel');
+    // Rellena el campo Last Name con un apellido inválido (contiene números)
+    await addOwnerPage.page.getByLabel('Last Name').fill('Owner123');
+    // Rellena el campo Address con una dirección válida
+    await addOwnerPage.page.getByLabel('Address').fill('123 Main St');
+    // Rellena el campo City con una ciudad válida
+    await addOwnerPage.page.getByLabel('City').fill('Madison');
+    // Rellena el campo Telephone con un teléfono válido
+    await addOwnerPage.page.getByLabel('Telephone').fill('1234567890');
+    // Verifica que el botón "Add Owner" esté deshabilitado por el apellido inválido
+    await expect(
+      addOwnerPage.page.getByRole('button', { name: 'Add Owner' }),
+    ).toBeDisabled();
+    // Verifica que se muestre el mensaje de error del apellido
+    await expect(
+      addOwnerPage.page.getByText('Last name must consist of letters only'),
+    ).toBeVisible();
   });
 });

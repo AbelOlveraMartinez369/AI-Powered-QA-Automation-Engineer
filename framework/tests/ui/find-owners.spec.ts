@@ -28,6 +28,14 @@ test.describe('Busqueda de owners', { tag: '@ui' }, () => {
     await expect(ownersListPage.rows).toHaveCount(2);
     // Verifica que la fila del owner Betty Davis sea visible
     await expect(ownersListPage.rowByName('Betty Davis')).toBeVisible();
+    // 🆕 Verifica que la fila del owner Harold Davis también sea visible
+    await expect(ownersListPage.rowByName('Harold Davis')).toBeVisible();
+        // 🆕 Verifica que la URL cambió a la lista de owners tras la búsqueda
+    await expect(ownersListPage.page).toHaveURL(/\/owners$/);
+        // 🆕 Verifica que el input de búsqueda conserva el apellido buscado
+    await expect(
+      findOwnersPage.page.getByRole('textbox'),
+    ).toHaveValue('Davis');
   });
 
   // Declara un test que verifica mostrar cero resultados para un apellido inexistente
@@ -44,5 +52,29 @@ test.describe('Busqueda de owners', { tag: '@ui' }, () => {
 
     // Verifica que la lista de owners tenga cero filas
     await expect(ownersListPage.rows).toHaveCount(0);
+    // 🆕 Verifica que se muestre el mensaje de "no encontrado"
+    await expect(
+      findOwnersPage.page.getByText(/No owners with LastName starting with/i),
+    ).toBeVisible();
+  });
+    // 🆕 Declara un test que documenta el comportamiento con campo vacío
+  test('debe mantener la lista completa cuando se busca con campo vacío', async ({
+    // Recibe la fixture findOwnersPage del contexto del test
+    findOwnersPage,
+    // Recibe la fixture ownersListPage del contexto del test
+    ownersListPage,
+  }) => {
+    // Abre la página de búsqueda de owners
+    await findOwnersPage.open();
+    // Verifica que el botón "Find Owner" esté habilitado aunque el campo esté vacío
+    await expect(
+      findOwnersPage.page.getByRole('button', { name: 'Find Owner' }),
+    ).toBeEnabled();
+    // Ejecuta la búsqueda sin escribir nada (campo vacío)
+    await findOwnersPage.searchByLastName('');
+    // Verifica que la tabla sigue mostrando al menos 1 owner (la lista completa)
+    await expect(ownersListPage.rows.first()).toBeVisible();
+    // Verifica que la URL NO cambió a una búsqueda filtrada (sigue en /owners)
+    await expect(ownersListPage.page).toHaveURL(/\/owners$/);
   });
 });
